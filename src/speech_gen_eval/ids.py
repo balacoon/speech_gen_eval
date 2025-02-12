@@ -13,9 +13,9 @@ from speech_gen_eval.audio_dir import get_audio_path
 
 def read_txt_and_mapping(  # noqa: C901
     txt_path: str,
-    audio_dir: str,
+    generated_audio: str,
     mapping_path: Optional[str] = None,
-    reference_audio_dir: Optional[str] = None,
+    original_audio: Optional[str] = None,
     ignore_missing: bool = True,
 ) -> tuple[list[tuple[str, str]], dict[str, str]]:
     """
@@ -24,9 +24,9 @@ def read_txt_and_mapping(  # noqa: C901
     where each key is a name and each value is a reference name
     Args:
         txt_path (str): The path to the text file
-        audio_dir (str): The directory to search for the audio files
+        generated_audio (str): The directory to search for the audio files
         mapping_path (Optional[str]): The path to the mapping file
-        reference_audio_dir (Optional[str]): The directory to search for the reference audio files
+        original_audio (Optional[str]): The directory to search for the original audio files
         ignore_missing (bool): Whether to ignore missing files
     Returns:
         tuple[list[tuple[str, str]], dict[str, str]]: A tuple containing a list of tuples,
@@ -37,8 +37,8 @@ def read_txt_and_mapping(  # noqa: C901
     with open(txt_path, "r") as fp:
         for line in fp:
             name, utterance = re.split(r"\s+", line.strip(), maxsplit=1)
-            if get_audio_path(audio_dir, name) is None:
-                msg = f"{name} is missing from {audio_dir}, skipping"
+            if get_audio_path(generated_audio, name) is None:
+                msg = f"{name} is missing from {generated_audio}, skipping"
                 if ignore_missing:
                     logging.warning(msg)
                     continue
@@ -66,10 +66,8 @@ def read_txt_and_mapping(  # noqa: C901
             else:
                 raise RuntimeError(msg)
         ref_name = mapping[name]
-        if get_audio_path(reference_audio_dir, ref_name) is None:
-            msg = (
-                f"reference {ref_name} is missing from {reference_audio_dir}, skipping"
-            )
+        if get_audio_path(original_audio, ref_name) is None:
+            msg = f"reference {ref_name} is missing from {original_audio}, skipping"
             if ignore_missing:
                 logging.warning(msg)
                 continue

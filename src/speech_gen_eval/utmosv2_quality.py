@@ -23,12 +23,12 @@ class UTMOSv2QualityEvaluator(Evaluator):
     def __init__(
         self,
         ids: dict[str, str],
-        audio_dir: str,
+        generated_audio: str,
         ignore_errors: bool = True,
         **kwargs,
     ):
         self._ids = ids
-        self._audio_dir = audio_dir
+        self._audio_dir = generated_audio
         self._ignore_errors = ignore_errors
 
         self._model = utmosv2.create_model(pretrained=True)
