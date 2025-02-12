@@ -4,14 +4,15 @@ Copyright 2025 Balacoon
 Evaluator - abstract class that does some objective measurement for audio
 """
 
-import time
 import logging
+import time
 
 
 class Evaluator:
     """
     Abstract class for evaluators
     """
+
     def get_metric(self) -> list[tuple[str, float]]:
         """
         Get the metric for the evaluator
@@ -33,6 +34,7 @@ class CombinedEvaluator(Evaluator):
     """
     Evaluator that combines multiple evaluators
     """
+
     def __init__(self, system_type, *args, **kwargs):
         """
         Initialize the evaluator

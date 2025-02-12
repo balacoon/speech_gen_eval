@@ -4,19 +4,19 @@ Copyright 2025 Balacoon
 Audio directory - utilities for converting audio files
 """
 
+import concurrent.futures
 import os
-from typing import Optional
+import shutil
 import subprocess
 import tempfile
-import shutil
 from contextlib import contextmanager
 from pathlib import Path
-import concurrent.futures
+from typing import Optional
 
-import torch    
-import torchaudio
-import resampy
 import numpy as np
+import resampy
+import torch
+import torchaudio
 
 
 def get_audio_path(directory: str, name: str) -> Optional[str]:
@@ -49,9 +49,11 @@ def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
     Returns:
         torch.Tensor: A tensor containing the audio data
     """
-    file_path = _get_audio_path(directory, name)
+    file_path = get_audio_path(directory, name)
     if file_path is None:
-        raise FileNotFoundError(f"No supported audio file found for '{name}' in '{directory}'.")
+        raise FileNotFoundError(
+            f"No supported audio file found for '{name}' in '{directory}'."
+        )
 
     # Get the original sample rate using torchaudio
     info = torchaudio.info(file_path)
@@ -59,16 +61,24 @@ def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
 
     # FFmpeg command to normalize loudness using speechnorm
     ffmpeg_cmd = [
-        "ffmpeg", "-i", file_path,
-        "-af", "speechnorm=e=5:r=0.0003:l=1",  # Apply speech-specific loudness normalization
-        "-f", "f32le",  # Output raw 32-bit float PCM
-        "-ac", "1",  # Convert to mono
-        "-ar", str(orig_sample_rate),  # Keep original sample rate
-        "pipe:1"  # Send output to stdout (pipe)
+        "ffmpeg",
+        "-i",
+        file_path,
+        "-af",
+        "speechnorm=e=5:r=0.0003:l=1",  # Apply speech-specific loudness normalization
+        "-f",
+        "f32le",  # Output raw 32-bit float PCM
+        "-ac",
+        "1",  # Convert to mono
+        "-ar",
+        str(orig_sample_rate),  # Keep original sample rate
+        "pipe:1",  # Send output to stdout (pipe)
     ]
 
     # Run FFmpeg and capture output stream
-    process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=10**8)
+    process = subprocess.Popen(
+        ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=10**8
+    )
     raw_audio = process.stdout.read()
 
     # Convert raw PCM data to NumPy array
@@ -76,11 +86,15 @@ def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
 
     # Ensure valid audio data
     if waveform.size == 0:
-        raise RuntimeError("Failed to decode audio. Check FFmpeg installation and input file.")
+        raise RuntimeError(
+            "Failed to decode audio. Check FFmpeg installation and input file."
+        )
 
     # Resample only if necessary
     if orig_sample_rate != sample_rate:
-        waveform = resampy.resample(waveform, orig_sample_rate, sample_rate, filter="kaiser_best")
+        waveform = resampy.resample(
+            waveform, orig_sample_rate, sample_rate, filter="kaiser_best"
+        )
 
     # Convert to PyTorch tensor and return
     return torch.tensor(waveform).unsqueeze(0)  # Add channel dimension
@@ -108,17 +122,19 @@ def _convert_audio_file(directory: str, name: str, sample_rate: int, output_dir:
 
 
 @contextmanager
-def convert_audio_dir(directory: str, ids: list[tuple[str, str]], sample_rate: int, njobs: int = 8):
+def convert_audio_dir(
+    directory: str, ids: list[tuple[str, str]], sample_rate: int, njobs: int = 8
+):
     """
     Context manager that converts audio files in parallel and stores them in a temporary directory.
     The directory is automatically deleted when the context exits.
-    
+
     Args:
         directory (str): Input directory containing audio files.
         ids (list[tuple[str, str]]): List of (filename, metadata) tuples.
         sample_rate (int): Target sample rate.
         max_workers (int): Number of parallel workers (default: 4).
-    
+
     Yields:
         str: Path to the temporary directory containing processed audio files.
     """
@@ -133,7 +149,9 @@ def convert_audio_dir(directory: str, ids: list[tuple[str, str]], sample_rate: i
             with concurrent.futures.ProcessPoolExecutor(max_workers=njobs) as executor:
                 # Submit tasks for parallel execution
                 futures = {
-                    executor.submit(_convert_audio_file, directory, name, sample_rate, tmp_dir): name
+                    executor.submit(
+                        _convert_audio_file, directory, name, sample_rate, tmp_dir
+                    ): name
                     for name, _ in ids
                 }
 
@@ -142,7 +160,7 @@ def convert_audio_dir(directory: str, ids: list[tuple[str, str]], sample_rate: i
                     future.result()
 
             # Yield the temporary directory containing converted files
-            yield tmp_dir  
+            yield tmp_dir
 
         finally:
             # Ensure cleanup when context exits
@@ -150,7 +168,7 @@ def convert_audio_dir(directory: str, ids: list[tuple[str, str]], sample_rate: i
 
 
 def get_audio_paths(directory: str, ids: list[tuple[str, str]]) -> list[str]:
-    """ 
+    """
     Get the paths to the audio files in the given directory.
     """
     paths = []
@@ -161,7 +179,9 @@ def get_audio_paths(directory: str, ids: list[tuple[str, str]]) -> list[str]:
     return paths
 
 
-def sort_ids_by_audio_size(directory: str, ids: list[tuple[str, str]]) -> list[tuple[str, str]]:
+def sort_ids_by_audio_size(
+    directory: str, ids: list[tuple[str, str]]
+) -> list[tuple[str, str]]:
     """
     Sort the ids by the size of the audio files.
     """

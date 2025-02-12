@@ -6,11 +6,10 @@ Main - entry point for speech generation evaluation
 
 import argparse
 import logging
-from typing import Optional
 
-from speech_gen_eval.ids import read_txt_and_mapping
+from speech_gen_eval.audio_dir import convert_audio_dir, sort_ids_by_audio_size
 from speech_gen_eval.evaluator import CombinedEvaluator
-from speech_gen_eval.audio_dir import sort_ids_by_audio_size, convert_audio_dir
+from speech_gen_eval.ids import read_txt_and_mapping
 
 
 def parse_args():
@@ -20,17 +19,34 @@ def parse_args():
         argparse.Namespace: The parsed arguments
     """
     ap = argparse.ArgumentParser(description="Runs speech generation evaluation")
-    ap.add_argument("--generated-audio", required=True, help="Directory with generated audio to eval")
+    ap.add_argument(
+        "--generated-audio",
+        required=True,
+        help="Directory with generated audio to eval",
+    )
     ap.add_argument("--original-audio", help="Original audio")
     ap.add_argument("--mapping", help="Maps audio ids to reference ids")
-    ap.add_argument("--txt", required=True, help="Text file with ids and text to run eval on")
-    ap.add_argument("--type", choices=["tts", "zero-tts", "zero-vc", "vocoder"], default="zero-tts", help="Type of system to evaluate")
-    ap.add_argument("--ignore-missing", action="store_true", help="Ignore when some id is missing or failed to process")
+    ap.add_argument(
+        "--txt", required=True, help="Text file with ids and text to run eval on"
+    )
+    ap.add_argument(
+        "--type",
+        choices=["tts", "zero-tts", "zero-vc", "vocoder"],
+        default="zero-tts",
+        help="Type of system to evaluate",
+    )
+    ap.add_argument(
+        "--ignore-missing",
+        action="store_true",
+        help="Ignore when some id is missing or failed to process",
+    )
     args = ap.parse_args()
 
     # Conditional argument checks
     if args.type in ["zero-tts", "zero-vc", "vocoder"] and not args.original_audio:
-        ap.error("--original-audio is required when type is 'zero-tts', 'zero-vc', or 'vocoder'.")
+        ap.error(
+            "--original-audio is required when type is 'zero-tts', 'zero-vc', or 'vocoder'."
+        )
 
     if args.type in ["zero-tts", "zero-vc"] and not args.mapping:
         ap.error("--mapping is required when type is 'zero-tts' or 'zero-vc'.")

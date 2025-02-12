@@ -4,12 +4,12 @@ Copyright 2025 Balacoon
 Intelligibility - evaluate the intelligibility of a speech system
 """
 
-import torch
 import jiwer
+import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-from speech_gen_eval.evaluator import Evaluator
 from speech_gen_eval.audio_dir import get_audio_paths
+from speech_gen_eval.evaluator import Evaluator
 
 
 class WhisperV3IntelligibilityEvaluator(Evaluator):
@@ -19,7 +19,6 @@ class WhisperV3IntelligibilityEvaluator(Evaluator):
 
     _model_id = "openai/whisper-large-v3-turbo"
     _gpu_batch_size = 8
-
 
     def __init__(
         self,
@@ -38,7 +37,10 @@ class WhisperV3IntelligibilityEvaluator(Evaluator):
         self._batch_size = self._gpu_batch_size if self._device == "cuda:0" else 1
         torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
         model = AutoModelForSpeechSeq2Seq.from_pretrained(
-            self._model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
+            self._model_id,
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            use_safetensors=True,
         )
         model.to(self._device)
         processor = AutoProcessor.from_pretrained(self._model_id)
@@ -50,7 +52,7 @@ class WhisperV3IntelligibilityEvaluator(Evaluator):
             torch_dtype=torch_dtype,
             device=self._device,
         )
-    
+
     def get_info(self):
         """
         Get the info for the evaluator

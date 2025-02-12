@@ -5,8 +5,9 @@ Test - test the WhisperV3intelligibility evaluator
 """
 
 import os
-from speech_gen_eval.whisperv3_intelligibility import WhisperV3IntelligibilityEvaluator
+
 from speech_gen_eval.ids import read_txt_and_mapping
+from speech_gen_eval.whisperv3_intelligibility import WhisperV3IntelligibilityEvaluator
 
 
 def test_intelligibility():

@@ -7,15 +7,16 @@ IDs - utilities for reading and mapping IDs
 import logging
 import re
 from typing import Optional
+
 from speech_gen_eval.audio_dir import get_audio_path
 
 
-def read_txt_and_mapping(
+def read_txt_and_mapping(  # noqa: C901
     txt_path: str,
     audio_dir: str,
     mapping_path: Optional[str] = None,
     reference_audio_dir: Optional[str] = None,
-    ignore_missing: bool = True
+    ignore_missing: bool = True,
 ) -> tuple[list[tuple[str, str]], dict[str, str]]:
     """
     Read a text file and a mapping file, and return a list of tuples,
@@ -35,7 +36,7 @@ def read_txt_and_mapping(
     txt = []
     with open(txt_path, "r") as fp:
         for line in fp:
-            name, utterance = re.split(r'\s+', line.strip(), maxsplit=1)
+            name, utterance = re.split(r"\s+", line.strip(), maxsplit=1)
             if get_audio_path(audio_dir, name) is None:
                 msg = f"{name} is missing from {audio_dir}, skipping"
                 if ignore_missing:
@@ -44,7 +45,7 @@ def read_txt_and_mapping(
                 else:
                     raise RuntimeError(msg)
             txt.append((name, utterance))
-    
+
     if mapping_path is None:
         return txt, None
 
@@ -53,7 +54,7 @@ def read_txt_and_mapping(
         for line in fp:
             name, ref = line.strip().split()
             mapping[name] = ref
-    
+
     filt_txt = []
     filt_mapping = {}
     for name, utterance in txt:
@@ -66,7 +67,9 @@ def read_txt_and_mapping(
                 raise RuntimeError(msg)
         ref_name = mapping[name]
         if get_audio_path(reference_audio_dir, ref_name) is None:
-            msg = f"reference {ref_name} is missing from {reference_audio_dir}, skipping"
+            msg = (
+                f"reference {ref_name} is missing from {reference_audio_dir}, skipping"
+            )
             if ignore_missing:
                 logging.warning(msg)
                 continue

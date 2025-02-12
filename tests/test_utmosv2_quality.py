@@ -5,8 +5,9 @@ Test - test the UTMOSv2quality evaluator
 """
 
 import os
-from speech_gen_eval.utmosv2_quality import UTMOSv2QualityEvaluator
+
 from speech_gen_eval.ids import read_txt_and_mapping
+from speech_gen_eval.utmosv2_quality import UTMOSv2QualityEvaluator
 
 
 def test_quality():
