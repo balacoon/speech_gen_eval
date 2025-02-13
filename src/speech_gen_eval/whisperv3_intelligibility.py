@@ -8,11 +8,11 @@ import jiwer
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
+from speech_gen_eval import evaluator
 from speech_gen_eval.audio_dir import get_audio_paths
-from speech_gen_eval.evaluator import Evaluator
 
 
-class WhisperV3IntelligibilityEvaluator(Evaluator):
+class WhisperV3IntelligibilityEvaluator(evaluator.Evaluator):
     """
     Intelligibility evaluator using Whisper V3
     """

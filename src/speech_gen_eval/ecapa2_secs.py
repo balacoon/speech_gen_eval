@@ -10,11 +10,11 @@ import torchaudio
 import tqdm
 from huggingface_hub import hf_hub_download
 
+from speech_gen_eval import evaluator
 from speech_gen_eval.audio_dir import get_audio_path
-from speech_gen_eval.evaluator import Evaluator
 
 
-class ECAPA2SECSEvaluator(Evaluator):
+class ECAPA2SECSEvaluator(evaluator.Evaluator):
     """
     ECAPA2 SECS evaluator
     """
@@ -25,12 +25,15 @@ class ECAPA2SECSEvaluator(Evaluator):
         self,
         ids: dict[str, str],
         generated_audio: str,
-        mapping: dict[str, str],
         original_audio: str,
+        mapping: dict[str, str] | None = None,
         ignore_errors: bool = True,
         **kwargs,
     ):
         self._ids = ids
+        if mapping is None:
+            # compare to itself if mapping is not provided.
+            mapping = {x: x for x, _ in self._ids}
         self._mapping = mapping
         self._generated = generated_audio
         self._original = original_audio

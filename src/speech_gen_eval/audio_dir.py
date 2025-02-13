@@ -77,7 +77,11 @@ def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
 
     # Run FFmpeg and capture output stream
     process = subprocess.Popen(
-        ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=10**8
+        ffmpeg_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        bufsize=10**8,
     )
     raw_audio = process.stdout.read()
 
@@ -185,5 +189,8 @@ def sort_ids_by_audio_size(
     """
     Sort the ids by the size of the audio files.
     """
-    paths = get_audio_paths(directory, ids)
-    return sorted(ids, key=lambda x: os.path.getsize(paths[x[0]]), reverse=True)
+    return sorted(
+        ids,
+        key=lambda x: os.path.getsize(get_audio_path(directory, x[0])),
+        reverse=True,
+    )

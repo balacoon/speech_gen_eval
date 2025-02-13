@@ -10,8 +10,8 @@ from multiprocessing import Pool
 import librosa
 import numpy as np
 
+from speech_gen_eval import evaluator
 from speech_gen_eval.audio_dir import get_audio_paths
-from speech_gen_eval.evaluator import Evaluator
 
 
 def _process_single_file(path: str, ignore_errors: bool = False) -> dict[str, float]:
@@ -60,7 +60,7 @@ def _process_single_file(path: str, ignore_errors: bool = False) -> dict[str, fl
         return None
 
 
-class F0StatsEvaluator(Evaluator):
+class F0StatsEvaluator(evaluator.Evaluator):
     """
     F0StatsEvaluator.
     Measures:

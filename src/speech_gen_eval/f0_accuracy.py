@@ -11,8 +11,8 @@ import librosa
 import numpy as np
 from scipy.stats import pearsonr
 
+from speech_gen_eval import evaluator
 from speech_gen_eval.audio_dir import get_audio_paths
-from speech_gen_eval.evaluator import Evaluator
 
 
 def _process_single_file(
@@ -59,7 +59,7 @@ def _process_single_file(
         return None
 
 
-class F0AccuracyEvaluator(Evaluator):
+class F0AccuracyEvaluator(evaluator.Evaluator):
     """
     F0AccuracyEvaluator.
     Measures:

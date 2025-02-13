@@ -47,7 +47,21 @@ def read_txt_and_mapping(  # noqa: C901
             txt.append((name, utterance))
 
     if mapping_path is None:
-        return txt, None
+        # no mapping file, if original audio provided, filter ids by original audio too
+        if original_audio is not None:
+            filt_txt = []
+            for name, utterance in txt:
+                if get_audio_path(original_audio, name) is None:
+                    msg = f"{name} is missing from {original_audio}, skipping"
+                    if ignore_missing:
+                        logging.warning(msg)
+                        continue
+                    else:
+                        raise RuntimeError(msg)
+                filt_txt.append((name, utterance))
+            return filt_txt, None
+        else:
+            return txt, None
 
     mapping = {}
     with open(mapping_path, "r") as fp:

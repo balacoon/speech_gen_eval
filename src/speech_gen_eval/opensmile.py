@@ -10,8 +10,8 @@ from multiprocessing import Pool
 import numpy as np
 import opensmile
 
+from speech_gen_eval import evaluator
 from speech_gen_eval.audio_dir import get_audio_paths
-from speech_gen_eval.evaluator import Evaluator
 
 
 def _process_fold(
@@ -35,7 +35,7 @@ def _process_fold(
     return results
 
 
-class OpenSmileEvaluator(Evaluator):
+class OpenSmileEvaluator(evaluator.Evaluator):
     """
     OpenSmileEvaluator measures jitter and shimmer.
     These are metrics of periodicity of,

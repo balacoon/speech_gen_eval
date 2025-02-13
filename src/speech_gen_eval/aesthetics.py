@@ -14,11 +14,11 @@ import tqdm
 from audiobox_aesthetics.cli import DEFAULT_CKPT_URL, download_file
 from audiobox_aesthetics.infer import AesWavlmPredictorMultiOutput
 
+from speech_gen_eval import evaluator
 from speech_gen_eval.audio_dir import get_audio_paths
-from speech_gen_eval.evaluator import Evaluator
 
 
-class AestheticsEvaluator(Evaluator):
+class AestheticsEvaluator(evaluator.Evaluator):
     """
     Aesthetics evaluator.
     Measures:
@@ -29,7 +29,9 @@ class AestheticsEvaluator(Evaluator):
     """
 
     _gpu_batch_size = 8
-    _local_ckpt_path = "~/.cache/audiobox_aesthetics/audiobox_aesthetics.pth"
+    _local_ckpt_path = os.path.expanduser(
+        "~/.cache/audiobox_aesthetics/audiobox_aesthetics.pth"
+    )
 
     def __init__(
         self,

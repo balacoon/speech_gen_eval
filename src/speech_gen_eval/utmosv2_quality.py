@@ -10,10 +10,10 @@ import numpy as np
 import torch
 import utmosv2
 
-from speech_gen_eval.evaluator import Evaluator
+from speech_gen_eval import evaluator
 
 
-class UTMOSv2QualityEvaluator(Evaluator):
+class UTMOSv2QualityEvaluator(evaluator.Evaluator):
     """
     UTMOSv2 quality evaluator
     """

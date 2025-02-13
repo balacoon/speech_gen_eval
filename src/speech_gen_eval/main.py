@@ -7,8 +7,10 @@ Main - entry point for speech generation evaluation
 import argparse
 import logging
 
+import yaml
+
 from speech_gen_eval.audio_dir import convert_audio_dir, sort_ids_by_audio_size
-from speech_gen_eval.evaluator import CombinedEvaluator
+from speech_gen_eval.combined_evaluator import CombinedEvaluator
 from speech_gen_eval.ids import read_txt_and_mapping
 
 
@@ -40,6 +42,7 @@ def parse_args():
         action="store_true",
         help="Ignore when some id is missing or failed to process",
     )
+    ap.add_argument("--out", help="Output file to save metrics")
     args = ap.parse_args()
 
     # Conditional argument checks
@@ -72,7 +75,7 @@ def main():
         with convert_audio_dir(args.original_audio, txt, 16000) as original_16khz:
             evaluator = CombinedEvaluator(
                 args.type,
-                txt=txt,
+                ids=txt,
                 generated_audio=generated_16khz,
                 mapping=mapping,
                 original_audio=original_16khz,
@@ -81,3 +84,7 @@ def main():
             metrics = evaluator.get_metric()
             for metric in metrics:
                 logging.info(f"{metric[0]}: {metric[1]:.4f}")
+
+    if args.out:
+        with open(args.out, "w") as f:
+            yaml.dump(metrics, f, precision=4, sort_keys=False)
