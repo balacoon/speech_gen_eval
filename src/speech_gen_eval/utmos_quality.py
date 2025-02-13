@@ -9,7 +9,7 @@ import os
 
 import numpy as np
 import torch
-import torchaudio
+import soundfile as sf
 from huggingface_hub import hf_hub_download
 
 from speech_gen_eval import evaluator
@@ -66,11 +66,15 @@ class UTMOSQualityEvaluator(evaluator.Evaluator):
             batch_paths = audio_paths[i : i + self._gpu_batch_size]
 
             # Load audio files
-            batch_audio = [torchaudio.load(path)[0][0] for path in batch_paths]
+            batch_audio = []
+            for batch_path in batch_paths:
+                audio, sr = sf.read(batch_path, dtype="int16")
+                assert sr == 16000
+                batch_audio.append(torch.from_numpy(audio))
 
             # Pad batch to max length
             x = torch.nn.utils.rnn.pad_sequence(batch_audio, batch_first=True)
-            x = x.to("cuda", dtype=torch.int16)
+            x = x.to("cuda")
 
             # Get predictions
             with torch.no_grad():
