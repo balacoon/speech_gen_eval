@@ -81,6 +81,8 @@ class F0AccuracyEvaluator(evaluator.Evaluator):
         self._ids = ids
         self._generated = generated_audio
         self._original = original_audio
+        if self._original is None:
+            raise ValueError("original_audio is required for F0 accuracy evaluation")
         self._ignore_errors = ignore_errors
 
     def get_info(self):

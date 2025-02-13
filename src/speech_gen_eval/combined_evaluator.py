@@ -13,8 +13,27 @@ from speech_gen_eval.evaluator import Evaluator
 from speech_gen_eval.f0_accuracy import F0AccuracyEvaluator
 from speech_gen_eval.f0_stats import F0StatsEvaluator
 from speech_gen_eval.opensmile import OpenSmileEvaluator
+from speech_gen_eval.utmos_quality import UTMOSQualityEvaluator
 from speech_gen_eval.utmosv2_quality import UTMOSv2QualityEvaluator
 from speech_gen_eval.whisperv3_intelligibility import WhisperV3IntelligibilityEvaluator
+
+name2evaluator = {
+    "utmos": UTMOSQualityEvaluator,
+    "utmosv2": UTMOSv2QualityEvaluator,
+    "cer": WhisperV3IntelligibilityEvaluator,
+    "aesthetics": AestheticsEvaluator,
+    "secs": ECAPA2SECSEvaluator,
+    "f0accuracy": F0AccuracyEvaluator,
+    "f0stats": F0StatsEvaluator,
+    "jitter": OpenSmileEvaluator,
+}
+evaluator_names = sorted(list(name2evaluator.keys()))
+type2names = {
+    "tts": ["cer", "utmos", "aesthetics", "f0stats"],
+    "zero-tts": ["cer", "utmos", "aesthetics", "secs"],
+    "zero-vc": ["cer", "utmos", "aesthetics", "secs"],
+    "vocoder": ["cer", "utmos", "aesthetics", "secs", "f0accuracy", "jitter"],
+}
 
 
 class CombinedEvaluator(Evaluator):
@@ -22,39 +41,15 @@ class CombinedEvaluator(Evaluator):
     Evaluator that combines multiple evaluators
     """
 
-    def __init__(self, system_type, *args, **kwargs):
+    def __init__(self, eval_names: list[str], *args, **kwargs):
         """
         Initialize the evaluator
         Args:
             system_type (str): The type of system to evaluate
         """
-        # default evaluators
         self._evaluators = [
-            WhisperV3IntelligibilityEvaluator(*args, **kwargs),
-            UTMOSv2QualityEvaluator(*args, **kwargs),
-            AestheticsEvaluator(*args, **kwargs),
+            name2evaluator[name](*args, **kwargs) for name in eval_names
         ]
-        if system_type == "tts":
-            self._evaluators.extend(
-                [
-                    F0StatsEvaluator(*args, **kwargs),
-                ]
-            )
-        elif system_type == "zero-tts" or system_type == "zero-vc":
-            self._evaluators.extend(
-                [
-                    ECAPA2SECSEvaluator(*args, **kwargs),
-                ]
-            )
-        elif system_type == "vocoder":
-            self._evaluators.extend(
-                [
-                    F0AccuracyEvaluator(*args, **kwargs),
-                    OpenSmileEvaluator(*args, **kwargs),
-                ]
-            )
-        else:
-            raise RuntimeError(f"Unexpected system type {system_type}")
 
     def get_metric(self) -> list[tuple[str, float]]:
         """

@@ -10,7 +10,11 @@ import logging
 import yaml
 
 from speech_gen_eval.audio_dir import convert_audio_dir, sort_ids_by_audio_size
-from speech_gen_eval.combined_evaluator import CombinedEvaluator
+from speech_gen_eval.combined_evaluator import (
+    CombinedEvaluator,
+    evaluator_names,
+    type2names,
+)
 from speech_gen_eval.ids import read_txt_and_mapping
 
 
@@ -33,9 +37,15 @@ def parse_args():
     )
     ap.add_argument(
         "--type",
-        choices=["tts", "zero-tts", "zero-vc", "vocoder"],
+        choices=["tts", "zero-tts", "zero-vc", "vocoder", "custom"],
         default="zero-tts",
         help="Type of system to evaluate",
+    )
+    ap.add_argument(
+        "--evaluators",
+        nargs="+",
+        choices=evaluator_names,
+        help="If running custom evaluation, specify the evaluators to run",
     )
     ap.add_argument(
         "--ignore-missing",
@@ -53,6 +63,12 @@ def parse_args():
 
     if args.type in ["zero-tts", "zero-vc"] and not args.mapping:
         ap.error("--mapping is required when type is 'zero-tts' or 'zero-vc'.")
+
+    if args.type != "custom" and args.evaluators:
+        ap.error("--evaluators is only allowed when type is 'custom'.")
+
+    if args.type == "custom" and not args.evaluators:
+        ap.error("--evaluators is required when type is 'custom'.")
 
     return args
 
@@ -73,8 +89,12 @@ def main():
     txt = sort_ids_by_audio_size(args.generated_audio, txt)
     with convert_audio_dir(args.generated_audio, txt, 16000) as generated_16khz:
         with convert_audio_dir(args.original_audio, txt, 16000) as original_16khz:
+            if args.type == "custom":
+                evaluator_names = args.evaluators
+            else:
+                evaluator_names = type2names[args.type]
             evaluator = CombinedEvaluator(
-                args.type,
+                evaluator_names,
                 ids=txt,
                 generated_audio=generated_16khz,
                 mapping=mapping,

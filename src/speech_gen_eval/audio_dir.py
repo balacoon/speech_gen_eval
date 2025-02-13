@@ -5,6 +5,7 @@ Audio directory - utilities for converting audio files
 """
 
 import concurrent.futures
+import logging
 import os
 import shutil
 import subprocess
@@ -149,6 +150,7 @@ def convert_audio_dir(
         # Create a temporary directory
         tmp_dir = tempfile.mkdtemp()
         try:
+            logging.info(f"Converting audio files in {directory} to {sample_rate}Hz")
             # Use ProcessPoolExecutor for parallel processing
             with concurrent.futures.ProcessPoolExecutor(max_workers=njobs) as executor:
                 # Submit tasks for parallel execution

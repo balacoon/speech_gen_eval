@@ -37,6 +37,8 @@ class ECAPA2SECSEvaluator(evaluator.Evaluator):
         self._mapping = mapping
         self._generated = generated_audio
         self._original = original_audio
+        if self._original is None:
+            raise ValueError("original_audio is required for ECAPA2 SECS evaluation")
         self._ignore_errors = ignore_errors
 
         model_file = hf_hub_download(
