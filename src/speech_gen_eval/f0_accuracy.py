@@ -126,7 +126,7 @@ class F0AccuracyEvaluator(evaluator.Evaluator):
         correlation = sum(r["correlation"] * r["count"] for r in results) / total_count
 
         return [
-            ("f0_fine_errors", fine_errors),
-            ("f0_gross_errors", gross_errors),
-            ("f0_correlation", correlation),
+            ("f0_fine_errors", float(fine_errors)),
+            ("f0_gross_errors", float(gross_errors)),
+            ("f0_correlation", float(correlation)),
         ]

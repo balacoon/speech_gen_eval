@@ -4,7 +4,10 @@ Copyright 2025 Balacoon
 Evaluate similarity between reference and generated audio using ECAPA2
 """
 
+import logging
+
 import numpy as np
+import soundfile as sf
 import torch
 import torchaudio
 import tqdm
@@ -14,12 +17,12 @@ from speech_gen_eval import evaluator
 from speech_gen_eval.audio_dir import get_audio_path
 
 
-class ECAPA2SECSEvaluator(evaluator.Evaluator):
+class ECAPASECSEvaluator(evaluator.Evaluator):
     """
-    ECAPA2 SECS evaluator
+    ECAPA SECS evaluator
     """
 
-    _model_id = "Jenthe/ECAPA2"
+    _model_name = "ecapa"
 
     def __init__(
         self,
@@ -38,30 +41,35 @@ class ECAPA2SECSEvaluator(evaluator.Evaluator):
         self._generated = generated_audio
         self._original = original_audio
         if self._original is None:
-            raise ValueError("original_audio is required for ECAPA2 SECS evaluation")
+            raise ValueError(
+                f"original_audio is required for {self._model_name} SECS evaluation"
+            )
         self._ignore_errors = ignore_errors
-
-        model_file = hf_hub_download(
-            repo_id="Jenthe/ECAPA2", filename="ecapa2.pt", cache_dir=None
-        )
         self._device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self._model = torch.jit.load(model_file, map_location=self._device)
-        self._model.half()
+        self._model = self._load_model()
+
+    def _load_model(self):
+        if self._device == "cpu":
+            logging.warning("ECAPA model is not available on CPU")
+            return None
+        model_file = hf_hub_download(
+            repo_id="balacoon/ecapa", filename="ecapa.jit", cache_dir=None
+        )
+        model = torch.jit.load(model_file).to(torch.device(self._device))
+        return model
 
     def get_info(self):
-        """
-        Get the info for the evaluator
-        Returns:
-            str: A string containing the info for the evaluator
-        """
-        return "Similarity evaluation with ECAPA2"
+        return f"Similarity evaluation with {self._model_name}"
 
     def _extract_embedding(self, path: str) -> np.ndarray:
-        arr, _ = torchaudio.load(path)
-        arr = arr.to(torch.device(self._device))
-        emb = self._model(arr)
-        emb = torch.nn.functional.normalize(emb, p=2, dim=1)
-        return emb.cpu().detach()
+        wav, sr = sf.read(path, dtype="int16")
+        assert sr == 16000
+        # run inference
+        x = torch.tensor(wav).unsqueeze(0).cuda()
+        x_len = torch.tensor([x.shape[1]], device=x.device)
+        emb = self._model(x, x_len)
+        emb = torch.nn.functional.normalize(emb, p=2, dim=1).cpu().detach()
+        return emb
 
     def get_metric(self):
         """
@@ -69,7 +77,9 @@ class ECAPA2SECSEvaluator(evaluator.Evaluator):
         Returns:
             list[tuple[str, float]]: A list of tuples, where each tuple contains a metric name and a value
         """
-
+        if self._model is None:
+            logging.warning("ECAPA model is not available, SECS is not measured")
+            return []
         # first extract the embeddings for reference audio
         ref_embeddings: dict[str, torch.Tensor] = {}
         for name, _ in tqdm.tqdm(self._ids):
@@ -89,4 +99,28 @@ class ECAPA2SECSEvaluator(evaluator.Evaluator):
             secs = torch.nn.functional.cosine_similarity(ref_emb, gen_emb).item()
             secs_lst.append(secs)
 
-        return [("ecapa2_secs", np.mean(secs_lst))]
+        return [(f"{self._model_name}_secs", float(np.mean(secs_lst)))]
+
+
+class ECAPA2SECSEvaluator(ECAPASECSEvaluator):
+    """
+    Same as parent class but uses newer speaker embedding model
+    """
+
+    _model_name = "ecapa2"
+
+    def _load_model(self):
+        model_file = hf_hub_download(
+            repo_id="Jenthe/ECAPA2", filename="ecapa2.pt", cache_dir=None
+        )
+        model = torch.jit.load(model_file, map_location=self._device)
+        if self._device == "cuda:0":
+            model.half()
+        return model
+
+    def _extract_embedding(self, path: str) -> np.ndarray:
+        arr, _ = torchaudio.load(path)
+        arr = arr.to(torch.device(self._device))
+        emb = self._model(arr)
+        emb = torch.nn.functional.normalize(emb, p=2, dim=1)
+        return emb.cpu().detach()

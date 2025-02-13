@@ -80,5 +80,5 @@ class AestheticsEvaluator(evaluator.Evaluator):
             ("PQ", "quality"),
         ]:
             values = [x[key] for x in outputs]
-            metrics.append((f"aesthetics_{name}", np.mean(values)))
+            metrics.append((f"aesthetics_{name}", float(np.mean(values))))
         return metrics

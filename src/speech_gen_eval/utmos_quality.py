@@ -83,5 +83,5 @@ class UTMOSQualityEvaluator(evaluator.Evaluator):
             # Move back to CPU and collect results
             all_scores.extend(scores.detach().cpu().tolist())
 
-        mean_score = np.mean(all_scores)
+        mean_score = float(np.mean(all_scores))
         return [("utmos_mos", mean_score)]

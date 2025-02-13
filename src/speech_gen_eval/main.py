@@ -4,9 +4,14 @@ Copyright 2025 Balacoon
 Main - entry point for speech generation evaluation
 """
 
+import warnings
+
+# supress warnings from torch and transformers
+warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
+warnings.filterwarnings("ignore", category=UserWarning, module="torch")
+
 import argparse
 import logging
-import warnings
 
 import yaml
 
@@ -79,10 +84,6 @@ def main():
     Main function
     """
     logging.basicConfig(level=logging.INFO)
-    # supress warnings from torch and transformers
-    warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
-    warnings.filterwarnings("ignore", category=UserWarning, module="torch")
-
     args = parse_args()
     txt, mapping = read_txt_and_mapping(
         args.txt,
