@@ -37,12 +37,16 @@ def _process_single_file(
 
         # Compute f0 errors
         f0_diff = np.abs(log_f0 - log_f0_ref)
-        fine_errors = np.sum((f0_diff > 0) & (f0_diff < 0.2)) / len(
-            f0_diff
-        )  # 0 < diff < 0.2
-        gross_errors = np.sum(f0_diff >= 0.2) / len(
-            f0_diff
-        )  # >= 20% threshold for gross errors
+        if len(f0_diff) == 0:
+            fine_errors = 0
+            gross_errors = 0
+        else:
+            fine_errors = np.sum((f0_diff > 0.05) & (f0_diff < 0.2)) / len(
+                f0_diff
+            )  # 0.05 < diff < 0.2
+            gross_errors = np.sum(f0_diff >= 0.2) / len(
+                f0_diff
+            )  # >= 20% threshold for gross errors
 
         # Compute correlation
         correlation, _ = pearsonr(log_f0, log_f0_ref)

@@ -5,11 +5,11 @@ UTMOS - evaluate the quality of a speech system
 """
 
 import logging
-import os
 
 import numpy as np
-import torch
 import soundfile as sf
+import torch
+import tqdm
 from huggingface_hub import hf_hub_download
 
 from speech_gen_eval import evaluator
@@ -62,7 +62,7 @@ class UTMOSQualityEvaluator(evaluator.Evaluator):
         all_scores = []
 
         # Process in batches
-        for i in range(0, len(audio_paths), self._gpu_batch_size):
+        for i in tqdm.tqdm(range(0, len(audio_paths), self._gpu_batch_size)):
             batch_paths = audio_paths[i : i + self._gpu_batch_size]
 
             # Load audio files

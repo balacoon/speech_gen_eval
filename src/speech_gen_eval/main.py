@@ -6,6 +6,7 @@ Main - entry point for speech generation evaluation
 
 import argparse
 import logging
+import warnings
 
 import yaml
 
@@ -78,6 +79,10 @@ def main():
     Main function
     """
     logging.basicConfig(level=logging.INFO)
+    # supress warnings from torch and transformers
+    warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
+    warnings.filterwarnings("ignore", category=UserWarning, module="torch")
+
     args = parse_args()
     txt, mapping = read_txt_and_mapping(
         args.txt,
@@ -106,5 +111,7 @@ def main():
                 logging.info(f"{metric[0]}: {metric[1]:.4f}")
 
     if args.out:
+        # Convert metrics to dict to save into yaml
+        metrics_dict = dict(metrics)
         with open(args.out, "w") as f:
-            yaml.dump(metrics, f, precision=4, sort_keys=False)
+            yaml.dump(metrics_dict, f, default_flow_style=False)
