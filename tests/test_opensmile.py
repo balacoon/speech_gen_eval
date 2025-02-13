@@ -1,33 +1,29 @@
 """
 Copyright 2025 Balacoon
 
-Test f0 accuracy evaluator
+Test opensmile evaluator
 """
 
 import os
 
-from speech_gen_eval.f0_accuracy import F0AccuracyEvaluator
+from speech_gen_eval.opensmile import OpenSmileEvaluator
 from speech_gen_eval.ids import read_txt_and_mapping
 
 
-def test_f0_accuracy():
+def test_opensmile():
     test_dir = os.path.dirname(os.path.abspath(__file__))
     txt_path = os.path.join(test_dir, "assets", "txt")
     wav_path = os.path.join(test_dir, "assets", "wav")
 
     ids, _ = read_txt_and_mapping(txt_path, wav_path, ignore_missing=False)
     assert len(ids) == 10
-    evaluator = F0AccuracyEvaluator(
+    evaluator = OpenSmileEvaluator(
         ids,
-        generated_audio=wav_path,
-        original_audio=wav_path,
+        wav_path,
         ignore_errors=False,
     )
     metrics = evaluator.get_metric()
-    assert len(metrics) == 3
+    assert len(metrics) == 2
     for name, val in metrics:
-        assert name.startswith("f0_")
-        if name.endswith("_errors"):
-            assert val == 0
-        else:
-            assert val == 1.0
+        assert val > 0
+        assert name in ["jitter", "shimmer"]
