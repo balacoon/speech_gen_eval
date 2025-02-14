@@ -33,7 +33,7 @@ type2names = {
     "tts": ["cer", "utmos", "aesthetics", "f0stats"],
     "zero-tts": ["cer", "utmos", "aesthetics", "ecapa_secs"],
     "zero-vc": ["cer", "utmos", "aesthetics", "ecapa_secs"],
-    "vocoder": ["cer", "utmos", "aesthetics", "secs", "f0accuracy", "jitter"],
+    "vocoder": ["cer", "utmos", "aesthetics", "ecapa_secs", "f0accuracy", "jitter"],
 }
 
 
