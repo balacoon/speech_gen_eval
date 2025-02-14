@@ -1,6 +1,6 @@
 resampy==0.4.3
-torch==2.6.0+cu124
-torchaudio==2.6.0+cu124
+torch==2.6.0
+torchaudio==2.6.0
 tqdm==4.67.1
 numpy==2.1.3
 transformers==4.48.3
@@ -8,5 +8,5 @@ accelerate==1.3.0
 jiwer==3.1.0
 audiobox_aesthetics==0.0.1
 opensmile==2.5.1
-
+librosa==0.10.2.post1
 git+https://github.com/sarulab-speech/UTMOSv2.git
