@@ -34,7 +34,7 @@ def read_txt_and_mapping(  # noqa: C901
         where each key is a name and each value is a reference name
     """
     txt = []
-    with open(txt_path, "r") as fp:
+    with open(txt_path, "r", encoding="utf-8") as fp:
         for line in fp:
             name, utterance = re.split(r"\s+", line.strip(), maxsplit=1)
             if get_audio_path(generated_audio, name) is None:
@@ -62,7 +62,10 @@ def read_txt_and_mapping(  # noqa: C901
             return filt_txt, None
         else:
             return txt, None
-
+    else:
+        if original_audio is None:
+            raise ValueError("original_audio is required when mapping_path is provided")
+    # read mapping file
     mapping = {}
     with open(mapping_path, "r") as fp:
         for line in fp:

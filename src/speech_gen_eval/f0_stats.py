@@ -128,7 +128,7 @@ class F0StatsEvaluator(evaluator.Evaluator):
         loudness_std = np.sqrt(loudness_sq_sum / loudness_count - loudness_mean**2)
 
         return [
-            ("log_f0_std", f0_std),
-            ("log_f0_delta_std", f0_delta_std),
-            ("loudness_std", loudness_std),
+            ("log_f0_std", float(f0_std)),
+            ("log_f0_delta_std", float(f0_delta_std)),
+            ("loudness_std", float(loudness_std)),
         ]

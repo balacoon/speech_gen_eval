@@ -87,15 +87,36 @@ class ECAPASECSEvaluator(evaluator.Evaluator):
             if ref_name in ref_embeddings:
                 continue
             ref_path = get_audio_path(self._original, ref_name)
-            ref_embeddings[ref_name] = self._extract_embedding(ref_path)
+            try:
+                ref_embeddings[ref_name] = self._extract_embedding(ref_path)
+            except Exception as e:
+                logging.error(
+                    f"Error exgracting reference spkr embedding for {ref_name}: {ref_path}"
+                )
+                if not self._ignore_errors:
+                    raise e
 
         # now extract embeddings for generated audio and compare to reference
         secs_lst = []
         for name, _ in tqdm.tqdm(self._ids):
             ref_name = self._mapping[name]
             path = get_audio_path(self._generated, name)
-            gen_emb = self._extract_embedding(path)
-            ref_emb = ref_embeddings[ref_name]
+            try:
+                gen_emb = self._extract_embedding(path)
+            except Exception as e:
+                if not self._ignore_errors:
+                    raise e
+                logging.error(
+                    f"Error exgracting generated spkr embedding for {name}: {path}"
+                )
+                continue
+            ref_emb = ref_embeddings.get(ref_name, None)
+            if ref_emb is None:
+                msg = f"Reference spkr embedding for {ref_name} not found"
+                if not self._ignore_errors:
+                    raise ValueError(msg)
+                logging.error(msg)
+                continue
             secs = torch.nn.functional.cosine_similarity(ref_emb, gen_emb).item()
             secs_lst.append(secs)
 

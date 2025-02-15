@@ -67,6 +67,17 @@ fi
 # Process arguments
 process_args "$@"
 
+# Check which image exists and use the appropriate one
+if [[ "$(docker images -q speech_gen_eval:latest 2> /dev/null)" != "" ]]; then
+    image_name="speech_gen_eval"
+elif [[ "$(docker images -q balacoon/speech_gen_eval:latest 2> /dev/null)" != "" ]]; then
+    image_name="balacoon/speech_gen_eval"
+else
+    echo "Error: Neither speech_gen_eval nor balacoon/speech_gen_eval image found"
+    echo "Please build the image with docker/build.sh or pull from Docker Hub"
+    exit 1
+fi
+
 # Run the container with proper mounts and GPU support
 docker run --rm \
     --gpus "device=$gpu_index" \
@@ -74,4 +85,4 @@ docker run --rm \
     -e LOCAL_GROUP_ID="$(id -g)" \
     -v sge_models_cache:/home/appuser/.cache:rw \
     "${docker_mounts[@]}" \
-    speech-gen-eval "${container_args[@]}"
+    "$image_name" "${container_args[@]}"

@@ -4,6 +4,8 @@ Copyright 2025 Balacoon
 Intelligibility - evaluate the intelligibility of a speech system
 """
 
+import logging
+
 import jiwer
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
@@ -50,6 +52,8 @@ class WhisperV3IntelligibilityEvaluator(evaluator.Evaluator):
             tokenizer=processor.tokenizer,
             feature_extractor=processor.feature_extractor,
             torch_dtype=torch_dtype,
+            chunk_length_s=30,
+            batch_size=self._batch_size,
             device=self._device,
         )
 
@@ -68,8 +72,27 @@ class WhisperV3IntelligibilityEvaluator(evaluator.Evaluator):
             list[tuple[str, float]]: A list of tuples, where each tuple contains a metric name and a value
         """
         audio_paths = get_audio_paths(self._audio_dir, self._ids)
-        results = self._pipe(audio_paths, batch_size=self._batch_size)
-        ref_txt_lst = [x[1] for x in self._ids]
-        hyp_txt_lst = [x.get("text", "") for x in results]
+        ref_txt_lst = []
+        hyp_txt_lst = []
+        for i in range(0, len(audio_paths), self._batch_size):
+            batch_audio_paths = audio_paths[i : i + self._batch_size]
+            batch_ids = self._ids[i : i + self._batch_size]
+            try:
+                results = self._pipe(batch_audio_paths, batch_size=self._batch_size)
+            except Exception as e:
+                if self._ignore_errors:
+                    logging.error(f"Error processing {batch_audio_paths}: {e}")
+                    continue
+                else:
+                    raise e
+            if len(results) != len(batch_ids):
+                msg = f"Number of results ({len(results)}) does not match number of ids ({len(batch_ids)})"
+                if self._ignore_errors:
+                    logging.error(msg)
+                    continue
+                else:
+                    raise ValueError(msg)
+            ref_txt_lst.extend([x[1] for x in batch_ids])
+            hyp_txt_lst.extend([x.get("text", "") for x in results])
         cer = jiwer.cer(ref_txt_lst, hyp_txt_lst)
         return [("whisperv3_cer", cer)]

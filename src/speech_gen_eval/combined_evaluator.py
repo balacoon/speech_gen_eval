@@ -31,7 +31,7 @@ name2evaluator = {
 evaluator_names = sorted(list(name2evaluator.keys()))
 type2names = {
     "tts": ["cer", "utmos", "aesthetics", "f0stats"],
-    "zero-tts": ["cer", "utmos", "aesthetics", "ecapa_secs"],
+    "zero-tts": ["cer", "utmos", "aesthetics", "ecapa_secs", "f0stats"],
     "zero-vc": ["cer", "utmos", "aesthetics", "ecapa_secs"],
     "vocoder": ["cer", "utmos", "aesthetics", "ecapa_secs", "f0accuracy", "jitter"],
 }

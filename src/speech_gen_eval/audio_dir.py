@@ -39,7 +39,9 @@ def get_audio_path(directory: str, name: str) -> Optional[str]:
     return file_path
 
 
-def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
+def _read_audio(
+    directory: str, name: str, sample_rate: int, min_dur: float, max_dur: float
+) -> torch.Tensor:
     """
     Read an audio file and return a tensor
     Args:
@@ -59,7 +61,12 @@ def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
     # Get the original sample rate using torchaudio
     info = torchaudio.info(file_path)
     orig_sample_rate = info.sample_rate
-
+    duration = info.num_frames / orig_sample_rate
+    if duration < min_dur or duration > max_dur:
+        logging.warning(
+            f"Skipping {name} because of duration {duration} (min: {min_dur}, max: {max_dur})"
+        )
+        return None
     # FFmpeg command to normalize loudness using speechnorm
     ffmpeg_cmd = [
         "ffmpeg",
@@ -105,14 +112,23 @@ def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
     return torch.tensor(waveform).unsqueeze(0)  # Add channel dimension
 
 
-def _convert_audio_file(directory: str, name: str, sample_rate: int, output_dir: str):
+def _convert_audio_file(
+    directory: str,
+    name: str,
+    sample_rate: int,
+    output_dir: str,
+    min_dur: float,
+    max_dur: float,
+):
     """
     Helper function to read, process, and save a single audio file.
     This function runs in parallel using ProcessPoolExecutor.
     """
     try:
         # Read audio and process it
-        audio = _read_audio(directory, name, sample_rate)
+        audio = _read_audio(directory, name, sample_rate, min_dur, max_dur)
+        if audio is None:
+            return None
 
         # Define output path
         output_path = Path(output_dir) / f"{name}.wav"
@@ -122,13 +138,19 @@ def _convert_audio_file(directory: str, name: str, sample_rate: int, output_dir:
 
         return name  # Return name of successfully processed file
     except Exception as e:
-        print(f"Error processing {name}: {e}")
+        logging.warning(f"Error processing {name}: {e}")
         return None  # Return None on failure
 
 
 @contextmanager
 def convert_audio_dir(
-    directory: str, ids: list[tuple[str, str]], sample_rate: int, njobs: int = 8
+    directory: str,
+    ids: list[tuple[str, str]],
+    mapping: Optional[dict[str, str]] = None,
+    sample_rate: int = 16000,
+    njobs: int = 8,
+    min_dur: float = 0.3,
+    max_dur: float = 40.0,
 ):
     """
     Context manager that converts audio files in parallel and stores them in a temporary directory.
@@ -137,8 +159,11 @@ def convert_audio_dir(
     Args:
         directory (str): Input directory containing audio files.
         ids (list[tuple[str, str]]): List of (filename, metadata) tuples.
+        mapping (dict[str, str]): Mapping of original speaker ids to generated speaker ids, should be converted too
         sample_rate (int): Target sample rate.
         max_workers (int): Number of parallel workers (default: 4).
+        min_dur: (float): Minimum duration of the audio files to convert (default: 0.1s).
+        max_dur: (float): Maximum duration of the audio files to convert (default: 30.0s).
 
     Yields:
         str: Path to the temporary directory containing processed audio files.
@@ -152,13 +177,23 @@ def convert_audio_dir(
         try:
             logging.info(f"Converting audio files in {directory} to {sample_rate}Hz")
             # Use ProcessPoolExecutor for parallel processing
+            names = [name for name, _ in ids]
+            if mapping is not None:
+                names.extend([mapping[name] for name in mapping])
+            names = list(set(names))
             with concurrent.futures.ProcessPoolExecutor(max_workers=njobs) as executor:
                 # Submit tasks for parallel execution
                 futures = {
                     executor.submit(
-                        _convert_audio_file, directory, name, sample_rate, tmp_dir
+                        _convert_audio_file,
+                        directory,
+                        name,
+                        sample_rate,
+                        tmp_dir,
+                        min_dur,
+                        max_dur,
                     ): name
-                    for name, _ in ids
+                    for name in names
                 }
 
                 # Collect results
