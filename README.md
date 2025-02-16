@@ -51,4 +51,29 @@ It will work on CPU-only but will be very slow.
 
 ## Docker
 
+Instead of installing dependencies manually, you can build/pull docker image.
+Get the image:
+```bash
+# build it yourself
+bash docker/build.sh
+# or pull prebuilt from dockerhub
+docker pull balacoon/speech_gen_eval:0.1
+```
+
+Then you can run `speech-gen-eval` from within docker.
+There is a helper script to handle docker, see inside of it for details:
+
+```bash
+bash docker/sge_docker_run.sh \
+    --txt <generated text> \
+    --generated-audio <dir-with-generated-speech> \
+    [--original-audio <dir-with-original-speech>] \
+    [--mapping <mapping-between-generated-and-original>] \
+    --type <tts|zero-tts|zero-vc|vocoder> \
+    --out <output-yaml-file>
+```
+
+## Applications
+
+This package is used to run evaluations for [TTSLeaderboard](https://huggingface.co/spaces/balacoon/TTSLeaderboard).
 
