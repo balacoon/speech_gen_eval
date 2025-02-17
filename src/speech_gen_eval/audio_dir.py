@@ -169,7 +169,7 @@ def convert_audio_dir(
             if mapping is not None:
                 names.extend([mapping[name] for name in mapping])
             names = list(set(names))
-            with concurrent.futures.ProcessPoolExecutor(max_workers=njobs) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=njobs) as executor:
                 # Submit tasks for parallel execution
                 futures = {
                     executor.submit(
