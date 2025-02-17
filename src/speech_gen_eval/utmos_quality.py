@@ -38,7 +38,9 @@ class UTMOSQualityEvaluator(evaluator.Evaluator):
         if not torch.cuda.is_available():
             logging.warning("UTMOS is a GPU-only model")
         else:
-            self._model_path = hf_hub_download(repo_id="balacoon/utmos", filename="utmos.jit")
+            self._model_path = hf_hub_download(
+                repo_id="balacoon/utmos", filename="utmos.jit"
+            )
 
     def get_info(self):
         """

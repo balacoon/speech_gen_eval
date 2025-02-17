@@ -75,7 +75,9 @@ def read_txt_and_mapping(  # noqa: C901
         if original_audio is not None:
             filt_txt = []
             for name, utterance in txt:
-                if _is_audio_good(original_audio, name, ignore_missing, min_dur, max_dur):
+                if _is_audio_good(
+                    original_audio, name, ignore_missing, min_dur, max_dur
+                ):
                     filt_txt.append((name, utterance))
             return filt_txt, None
         else:

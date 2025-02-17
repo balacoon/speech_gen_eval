@@ -1,7 +1,7 @@
 """
 Copyright 2025 Balacoon
 
-Evaluate similarity between reference and generated audio using ECAPA2
+Evaluate similarity between reference and generated audio using ECAPA/ECAPA2/ReDimNet
 """
 
 import logging
@@ -141,6 +141,36 @@ class ECAPA2SECSEvaluator(ECAPASECSEvaluator):
 
     def _extract_embedding(self, model, path: str) -> np.ndarray:
         arr, _ = torchaudio.load(path)
+        arr = arr.to(torch.device(self._device))
+        emb = model(arr)
+        emb = torch.nn.functional.normalize(emb, p=2, dim=1)
+        return emb.cpu().detach()
+
+
+class ReDimNetSECSEvaluator(ECAPASECSEvaluator):
+    """
+    Same as parent class but uses ReDimNet
+    """
+
+    _model_name = "redimnet"
+
+    def _load_model(self):
+        model = torch.hub.load(
+            "IDRnD/ReDimNet",
+            "ReDimNet",
+            model_name="b6",
+            train_type="ft_lm",
+            dataset="vox2",
+        )
+        if self._device == "cuda:0":
+            model.cuda()
+        model.eval()
+        return model
+
+    def _extract_embedding(self, model, path: str) -> np.ndarray:
+        wav, sr = sf.read(path, dtype="float32")
+        assert sr == 16000
+        arr = torch.tensor(wav).unsqueeze(0)
         arr = arr.to(torch.device(self._device))
         emb = model(arr)
         emb = torch.nn.functional.normalize(emb, p=2, dim=1)

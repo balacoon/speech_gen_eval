@@ -8,11 +8,15 @@ import logging
 import time
 
 from speech_gen_eval.aesthetics import AestheticsEvaluator
-from speech_gen_eval.ecapa_secs import ECAPA2SECSEvaluator, ECAPASECSEvaluator
 from speech_gen_eval.evaluator import Evaluator
 from speech_gen_eval.f0_accuracy import F0AccuracyEvaluator
 from speech_gen_eval.f0_stats import F0StatsEvaluator
 from speech_gen_eval.opensmile import OpenSmileEvaluator
+from speech_gen_eval.secs import (
+    ECAPA2SECSEvaluator,
+    ECAPASECSEvaluator,
+    ReDimNetSECSEvaluator,
+)
 from speech_gen_eval.utmos_quality import UTMOSQualityEvaluator
 from speech_gen_eval.utmosv2_quality import UTMOSv2QualityEvaluator
 from speech_gen_eval.whisperv3_intelligibility import WhisperV3IntelligibilityEvaluator
@@ -24,6 +28,7 @@ name2evaluator = {
     "aesthetics": AestheticsEvaluator,
     "ecapa_secs": ECAPASECSEvaluator,
     "ecapa2_secs": ECAPA2SECSEvaluator,
+    "redimnet_secs": ReDimNetSECSEvaluator,
     "f0accuracy": F0AccuracyEvaluator,
     "f0stats": F0StatsEvaluator,
     "jitter": OpenSmileEvaluator,
@@ -31,9 +36,9 @@ name2evaluator = {
 evaluator_names = sorted(list(name2evaluator.keys()))
 type2names = {
     "tts": ["cer", "utmos", "aesthetics", "f0stats"],
-    "zero-tts": ["cer", "utmos", "aesthetics", "ecapa_secs", "f0stats"],
-    "zero-vc": ["cer", "utmos", "aesthetics", "ecapa_secs"],
-    "vocoder": ["cer", "utmos", "aesthetics", "ecapa_secs", "f0accuracy", "jitter"],
+    "zero-tts": ["cer", "utmos", "aesthetics", "redimnet_secs", "f0stats"],
+    "zero-vc": ["cer", "utmos", "aesthetics", "redimnet_secs"],
+    "vocoder": ["cer", "utmos", "aesthetics", "redimnet_secs", "f0accuracy", "jitter"],
 }
 
 

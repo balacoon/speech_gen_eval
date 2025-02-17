@@ -39,9 +39,7 @@ def get_audio_path(directory: str, name: str) -> Optional[str]:
     return file_path
 
 
-def _read_audio(
-    directory: str, name: str, sample_rate: int
-) -> torch.Tensor:
+def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
     """
     Read an audio file and return a tensor
     Args:

@@ -9,11 +9,17 @@ import os
 import numpy as np
 import pytest
 
-from speech_gen_eval.ecapa_secs import ECAPA2SECSEvaluator, ECAPASECSEvaluator
 from speech_gen_eval.ids import read_txt_and_mapping
+from speech_gen_eval.secs import (
+    ECAPA2SECSEvaluator,
+    ECAPASECSEvaluator,
+    ReDimNetSECSEvaluator,
+)
 
 
-@pytest.mark.parametrize("evaluator_cls", [ECAPASECSEvaluator, ECAPA2SECSEvaluator])
+@pytest.mark.parametrize(
+    "evaluator_cls", [ECAPASECSEvaluator, ECAPA2SECSEvaluator, ReDimNetSECSEvaluator]
+)
 def test_quality(evaluator_cls):
     test_dir = os.path.dirname(os.path.abspath(__file__))
     txt_path = os.path.join(test_dir, "assets", "txt")
@@ -52,5 +58,5 @@ def test_quality(evaluator_cls):
         metrics = evaluator.get_metric()
         assert len(metrics) == 1
         name, val = metrics[0]
-        assert name == "ecapa_secs" or name == "ecapa2_secs"
+        assert name == "ecapa_secs" or name == "ecapa2_secs" or name == "redimnet_secs"
         check_secs(val)
