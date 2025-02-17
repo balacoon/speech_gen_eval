@@ -40,7 +40,7 @@ def get_audio_path(directory: str, name: str) -> Optional[str]:
 
 
 def _read_audio(
-    directory: str, name: str, sample_rate: int, min_dur: float, max_dur: float
+    directory: str, name: str, sample_rate: int
 ) -> torch.Tensor:
     """
     Read an audio file and return a tensor
@@ -61,12 +61,6 @@ def _read_audio(
     # Get the original sample rate using torchaudio
     info = torchaudio.info(file_path)
     orig_sample_rate = info.sample_rate
-    duration = info.num_frames / orig_sample_rate
-    if duration < min_dur or duration > max_dur:
-        logging.warning(
-            f"Skipping {name} because of duration {duration} (min: {min_dur}, max: {max_dur})"
-        )
-        return None
     # FFmpeg command to normalize loudness using speechnorm
     ffmpeg_cmd = [
         "ffmpeg",
@@ -117,8 +111,6 @@ def _convert_audio_file(
     name: str,
     sample_rate: int,
     output_dir: str,
-    min_dur: float,
-    max_dur: float,
 ):
     """
     Helper function to read, process, and save a single audio file.
@@ -126,7 +118,7 @@ def _convert_audio_file(
     """
     try:
         # Read audio and process it
-        audio = _read_audio(directory, name, sample_rate, min_dur, max_dur)
+        audio = _read_audio(directory, name, sample_rate)
         if audio is None:
             return None
 
@@ -149,8 +141,6 @@ def convert_audio_dir(
     mapping: Optional[dict[str, str]] = None,
     sample_rate: int = 16000,
     njobs: int = 8,
-    min_dur: float = 0.3,
-    max_dur: float = 40.0,
 ):
     """
     Context manager that converts audio files in parallel and stores them in a temporary directory.
@@ -162,8 +152,6 @@ def convert_audio_dir(
         mapping (dict[str, str]): Mapping of original speaker ids to generated speaker ids, should be converted too
         sample_rate (int): Target sample rate.
         max_workers (int): Number of parallel workers (default: 4).
-        min_dur: (float): Minimum duration of the audio files to convert (default: 0.1s).
-        max_dur: (float): Maximum duration of the audio files to convert (default: 30.0s).
 
     Yields:
         str: Path to the temporary directory containing processed audio files.
@@ -190,8 +178,6 @@ def convert_audio_dir(
                         name,
                         sample_rate,
                         tmp_dir,
-                        min_dur,
-                        max_dur,
                     ): name
                     for name in names
                 }

@@ -34,11 +34,11 @@ class UTMOSQualityEvaluator(evaluator.Evaluator):
         self._audio_dir = generated_audio
         self._ignore_errors = ignore_errors
 
+        self._model_path = None
         if not torch.cuda.is_available():
             logging.warning("UTMOS is a GPU-only model")
         else:
-            model_path = hf_hub_download(repo_id="balacoon/utmos", filename="utmos.jit")
-            self._model = torch.jit.load(model_path)
+            self._model_path = hf_hub_download(repo_id="balacoon/utmos", filename="utmos.jit")
 
     def get_info(self):
         """
@@ -54,9 +54,9 @@ class UTMOSQualityEvaluator(evaluator.Evaluator):
         Returns:
             list[tuple[str, float]]: A list of tuples, where each tuple contains a metric name and a value
         """
-        if not torch.cuda.is_available():
-            logging.warning("no GPU, UTMOS metric is not computed")
+        if self._model_path is None:
             return []
+        model = torch.jit.load(self._model_path)
 
         audio_paths = get_audio_paths(self._audio_dir, self._ids)
         all_scores = []
@@ -78,7 +78,7 @@ class UTMOSQualityEvaluator(evaluator.Evaluator):
 
             # Get predictions
             with torch.no_grad():
-                scores = self._model(x)
+                scores = model(x)
 
             # Move back to CPU and collect results
             all_scores.extend(scores.detach().cpu().tolist())

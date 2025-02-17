@@ -8,7 +8,33 @@ import logging
 import re
 from typing import Optional
 
+import torchaudio
+
 from speech_gen_eval.audio_dir import get_audio_path
+
+
+def _is_audio_good(
+    directory: str, name: str, ignore_missing: bool, min_dur: float, max_dur: float
+) -> bool:
+    """
+    Check if an audio file is good
+    """
+    path = get_audio_path(directory, name)
+    if path is None:
+        msg = f"Skipping {name} because it is missing from {directory}"
+        if not ignore_missing:
+            raise ValueError(msg)
+        logging.warning(msg)
+        return False
+    info = torchaudio.info(path)
+    duration = info.num_frames / info.sample_rate
+    if duration < min_dur or duration > max_dur:
+        msg = f"Skipping {name} because of duration {duration} (min: {min_dur}, max: {max_dur})"
+        if not ignore_missing:
+            raise ValueError(msg)
+        logging.warning(msg)
+        return False
+    return True
 
 
 def read_txt_and_mapping(  # noqa: C901
@@ -17,6 +43,8 @@ def read_txt_and_mapping(  # noqa: C901
     mapping_path: Optional[str] = None,
     original_audio: Optional[str] = None,
     ignore_missing: bool = True,
+    min_dur: float = 0.3,
+    max_dur: float = 40.0,
 ) -> tuple[list[tuple[str, str]], dict[str, str]]:
     """
     Read a text file and a mapping file, and return a list of tuples,
@@ -28,6 +56,8 @@ def read_txt_and_mapping(  # noqa: C901
         mapping_path (Optional[str]): The path to the mapping file
         original_audio (Optional[str]): The directory to search for the original audio files
         ignore_missing (bool): Whether to ignore missing files
+        min_dur (float): The minimum duration of the audio files to consider (default: 0.3s).
+        max_dur (float): The maximum duration of the audio files to consider (default: 40.0s).
     Returns:
         tuple[list[tuple[str, str]], dict[str, str]]: A tuple containing a list of tuples,
         where each tuple contains a name and an utterance, and a dictionary,
@@ -37,28 +67,16 @@ def read_txt_and_mapping(  # noqa: C901
     with open(txt_path, "r", encoding="utf-8") as fp:
         for line in fp:
             name, utterance = re.split(r"\s+", line.strip(), maxsplit=1)
-            if get_audio_path(generated_audio, name) is None:
-                msg = f"{name} is missing from {generated_audio}, skipping"
-                if ignore_missing:
-                    logging.warning(msg)
-                    continue
-                else:
-                    raise RuntimeError(msg)
-            txt.append((name, utterance))
+            if _is_audio_good(generated_audio, name, ignore_missing, min_dur, max_dur):
+                txt.append((name, utterance))
 
     if mapping_path is None:
         # no mapping file, if original audio provided, filter ids by original audio too
         if original_audio is not None:
             filt_txt = []
             for name, utterance in txt:
-                if get_audio_path(original_audio, name) is None:
-                    msg = f"{name} is missing from {original_audio}, skipping"
-                    if ignore_missing:
-                        logging.warning(msg)
-                        continue
-                    else:
-                        raise RuntimeError(msg)
-                filt_txt.append((name, utterance))
+                if _is_audio_good(original_audio, name, ignore_missing, min_dur, max_dur):
+                    filt_txt.append((name, utterance))
             return filt_txt, None
         else:
             return txt, None
@@ -83,13 +101,7 @@ def read_txt_and_mapping(  # noqa: C901
             else:
                 raise RuntimeError(msg)
         ref_name = mapping[name]
-        if get_audio_path(original_audio, ref_name) is None:
-            msg = f"reference {ref_name} is missing from {original_audio}, skipping"
-            if ignore_missing:
-                logging.warning(msg)
-                continue
-            else:
-                raise RuntimeError(msg)
-        filt_txt.append((name, utterance))
-        filt_mapping[name] = ref_name
+        if _is_audio_good(original_audio, ref_name, ignore_missing, min_dur, max_dur):
+            filt_txt.append((name, utterance))
+            filt_mapping[name] = ref_name
     return filt_txt, filt_mapping

@@ -46,7 +46,6 @@ class ECAPASECSEvaluator(evaluator.Evaluator):
             )
         self._ignore_errors = ignore_errors
         self._device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self._model = self._load_model()
 
     def _load_model(self):
         if self._device == "cpu":
@@ -61,13 +60,13 @@ class ECAPASECSEvaluator(evaluator.Evaluator):
     def get_info(self):
         return f"Similarity evaluation with {self._model_name}"
 
-    def _extract_embedding(self, path: str) -> np.ndarray:
+    def _extract_embedding(self, model, path: str) -> np.ndarray:
         wav, sr = sf.read(path, dtype="int16")
         assert sr == 16000
         # run inference
         x = torch.tensor(wav).unsqueeze(0).cuda()
         x_len = torch.tensor([x.shape[1]], device=x.device)
-        emb = self._model(x, x_len)
+        emb = model(x, x_len)
         emb = torch.nn.functional.normalize(emb, p=2, dim=1).cpu().detach()
         return emb
 
@@ -77,7 +76,8 @@ class ECAPASECSEvaluator(evaluator.Evaluator):
         Returns:
             list[tuple[str, float]]: A list of tuples, where each tuple contains a metric name and a value
         """
-        if self._model is None:
+        model = self._load_model()
+        if model is None:
             logging.warning("ECAPA model is not available, SECS is not measured")
             return []
         # first extract the embeddings for reference audio
@@ -88,7 +88,7 @@ class ECAPASECSEvaluator(evaluator.Evaluator):
                 continue
             ref_path = get_audio_path(self._original, ref_name)
             try:
-                ref_embeddings[ref_name] = self._extract_embedding(ref_path)
+                ref_embeddings[ref_name] = self._extract_embedding(model, ref_path)
             except Exception as e:
                 logging.error(
                     f"Error exgracting reference spkr embedding for {ref_name}: {ref_path}"
@@ -102,7 +102,7 @@ class ECAPASECSEvaluator(evaluator.Evaluator):
             ref_name = self._mapping[name]
             path = get_audio_path(self._generated, name)
             try:
-                gen_emb = self._extract_embedding(path)
+                gen_emb = self._extract_embedding(model, path)
             except Exception as e:
                 if not self._ignore_errors:
                     raise e
@@ -139,9 +139,9 @@ class ECAPA2SECSEvaluator(ECAPASECSEvaluator):
             model.half()
         return model
 
-    def _extract_embedding(self, path: str) -> np.ndarray:
+    def _extract_embedding(self, model, path: str) -> np.ndarray:
         arr, _ = torchaudio.load(path)
         arr = arr.to(torch.device(self._device))
-        emb = self._model(arr)
+        emb = model(arr)
         emb = torch.nn.functional.normalize(emb, p=2, dim=1)
         return emb.cpu().detach()

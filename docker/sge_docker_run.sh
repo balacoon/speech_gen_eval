@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Get the directory containing this script, handling symlinks
+script_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
 # Function to convert host paths to container paths and build docker mounts
 process_args() {
     container_args=()
@@ -68,10 +71,11 @@ fi
 process_args "$@"
 
 # Check which image exists and use the appropriate one
+version=$(cat "$script_dir/VERSION")
 if [[ "$(docker images -q speech_gen_eval:latest 2> /dev/null)" != "" ]]; then
     image_name="speech_gen_eval"
-elif [[ "$(docker images -q balacoon/speech_gen_eval:0.1 2> /dev/null)" != "" ]]; then
-    image_name="balacoon/speech_gen_eval:0.1"
+elif [[ "$(docker images -q balacoon/speech_gen_eval:${version} 2> /dev/null)" != "" ]]; then
+    image_name="balacoon/speech_gen_eval:${version}"
 else
     echo "Error: Neither speech_gen_eval nor balacoon/speech_gen_eval image found"
     echo "Please build the image with docker/build.sh or pull from Docker Hub"

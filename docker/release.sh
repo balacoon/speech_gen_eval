@@ -11,7 +11,8 @@ bash $1 --username <docker_username> --password <docker_password>
 EOF
 }
 
-version="0.1"
+script_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+version=$(cat "$script_dir/VERSION")
 
 username=""
 password=""

@@ -37,25 +37,6 @@ class WhisperV3IntelligibilityEvaluator(evaluator.Evaluator):
         # https://huggingface.co/openai/whisper-large-v3-turbo
         self._device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self._batch_size = self._gpu_batch_size if self._device == "cuda:0" else 1
-        torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-        model = AutoModelForSpeechSeq2Seq.from_pretrained(
-            self._model_id,
-            torch_dtype=torch_dtype,
-            low_cpu_mem_usage=True,
-            use_safetensors=True,
-        )
-        model.to(self._device)
-        processor = AutoProcessor.from_pretrained(self._model_id)
-        self._pipe = pipeline(
-            "automatic-speech-recognition",
-            model=model,
-            tokenizer=processor.tokenizer,
-            feature_extractor=processor.feature_extractor,
-            torch_dtype=torch_dtype,
-            chunk_length_s=30,
-            batch_size=self._batch_size,
-            device=self._device,
-        )
 
     def get_info(self):
         """
@@ -71,6 +52,27 @@ class WhisperV3IntelligibilityEvaluator(evaluator.Evaluator):
         Returns:
             list[tuple[str, float]]: A list of tuples, where each tuple contains a metric name and a value
         """
+        # create model
+        torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+        model = AutoModelForSpeechSeq2Seq.from_pretrained(
+            self._model_id,
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            use_safetensors=True,
+        )
+        model.to(self._device)
+        processor = AutoProcessor.from_pretrained(self._model_id)
+        pipe = pipeline(
+            "automatic-speech-recognition",
+            model=model,
+            tokenizer=processor.tokenizer,
+            feature_extractor=processor.feature_extractor,
+            torch_dtype=torch_dtype,
+            chunk_length_s=30,
+            batch_size=self._batch_size,
+            device=self._device,
+        )
+
         audio_paths = get_audio_paths(self._audio_dir, self._ids)
         ref_txt_lst = []
         hyp_txt_lst = []
@@ -78,7 +80,7 @@ class WhisperV3IntelligibilityEvaluator(evaluator.Evaluator):
             batch_audio_paths = audio_paths[i : i + self._batch_size]
             batch_ids = self._ids[i : i + self._batch_size]
             try:
-                results = self._pipe(batch_audio_paths, batch_size=self._batch_size)
+                results = pipe(batch_audio_paths, batch_size=self._batch_size)
             except Exception as e:
                 if self._ignore_errors:
                     logging.error(f"Error processing {batch_audio_paths}: {e}")
@@ -94,5 +96,7 @@ class WhisperV3IntelligibilityEvaluator(evaluator.Evaluator):
                     raise ValueError(msg)
             ref_txt_lst.extend([x[1] for x in batch_ids])
             hyp_txt_lst.extend([x.get("text", "") for x in results])
+
+        # Calculate CER
         cer = jiwer.cer(ref_txt_lst, hyp_txt_lst)
         return [("whisperv3_cer", cer)]

@@ -31,8 +31,6 @@ class UTMOSv2QualityEvaluator(evaluator.Evaluator):
         self._audio_dir = generated_audio
         self._ignore_errors = ignore_errors
 
-        self._model = utmosv2.create_model(pretrained=True)
-
     def get_info(self):
         """
         Get the info for the evaluator
@@ -47,9 +45,10 @@ class UTMOSv2QualityEvaluator(evaluator.Evaluator):
         Returns:
             list[tuple[str, float]]: A list of tuples, where each tuple contains a metric name and a value
         """
+        model = utmosv2.create_model(pretrained=True)
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         batch_size = self._gpu_batch_size if device == "cuda:0" else 1
-        results = self._model.predict(
+        results = model.predict(
             input_dir=self._audio_dir, device=device, batch_size=batch_size
         )
         mos_dict = {

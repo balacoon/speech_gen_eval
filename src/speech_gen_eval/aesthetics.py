@@ -48,9 +48,6 @@ class AestheticsEvaluator(evaluator.Evaluator):
             os.makedirs(os.path.dirname(self._local_ckpt_path), exist_ok=True)
             download_file(DEFAULT_CKPT_URL, self._local_ckpt_path)
 
-        self._model = AesWavlmPredictorMultiOutput(self._local_ckpt_path)
-        self._model.setup_model()
-
     def get_info(self):
         """
         Get the info for the evaluator
@@ -63,6 +60,9 @@ class AestheticsEvaluator(evaluator.Evaluator):
         """
         Get the metric
         """
+        self._model = AesWavlmPredictorMultiOutput(self._local_ckpt_path)
+        self._model.setup_model()
+
         audio_paths = get_audio_paths(self._audio_dir, self._ids)
         metadata = [{"path": path} for path in audio_paths]
         outputs = []
