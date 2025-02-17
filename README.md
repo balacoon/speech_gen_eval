@@ -57,7 +57,7 @@ Get the image:
 # build it yourself
 bash docker/build.sh
 # or pull prebuilt from dockerhub
-docker pull balacoon/speech_gen_eval:0.1
+docker pull balacoon/speech_gen_eval:0.2
 ```
 
 Then you can run `speech-gen-eval` from within docker.
