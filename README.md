@@ -6,7 +6,7 @@ Contains evaluators for:
 * Intelligibility with Character Error Rate (CER) via [Whisper Large v3 Turbo](https://huggingface.co/openai/whisper-large-v3-turbo).
 * Perceptual quality via [UTMOS](https://huggingface.co/balacoon/utmos) or [UTMOSv2](https://github.com/sarulab-speech/UTMOSv2).
 * [Audiobox Aesthetics](https://github.com/facebookresearch/audiobox-aesthetics) 
-* Speaker similarity with Speaker Embedding Cosine Similarity (SECS) via [ECAPA](https://huggingface.co/balacoon/ecapa) or [ECAPA v2](https://huggingface.co/Jenthe/ECAPA2) for Zero-TTS and Zero-VC
+* Speaker similarity with Speaker Embedding Cosine Similarity (SECS) via [ECAPA](https://huggingface.co/balacoon/ecapa), [ECAPA v2](https://huggingface.co/Jenthe/ECAPA2) or [ReDimNet](https://github.com/IDRnD/redimnet) for Zero-TTS and Zero-VC
 * Expressiveness via F0, F0 delta, and RMS standard deviation for TTS.
 * F0 accuracy (fine and gross errors) and correlation for Vocoders.
 * Jitter and Shimmer via [OpenSMILE](https://github.com/audeering/opensmile) for Vocoders.
