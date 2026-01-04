@@ -8,7 +8,7 @@ import logging
 import re
 from typing import Optional
 
-import torchaudio
+import soundfile as sf
 
 from speech_gen_eval.audio_dir import get_audio_path
 
@@ -26,8 +26,8 @@ def _is_audio_good(
             raise ValueError(msg)
         logging.warning(msg)
         return False
-    info = torchaudio.info(path)
-    duration = info.num_frames / info.sample_rate
+    info = sf.info(path)
+    duration = info.frames / info.samplerate
     if duration < min_dur or duration > max_dur:
         msg = f"Skipping {name} because of duration {duration} (min: {min_dur}, max: {max_dur})"
         if not ignore_missing:

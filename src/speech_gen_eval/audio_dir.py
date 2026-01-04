@@ -18,6 +18,7 @@ import numpy as np
 import resampy
 import torch
 import torchaudio
+import soundfile as sf
 
 
 def get_audio_path(directory: str, name: str) -> Optional[str]:
@@ -57,8 +58,8 @@ def _read_audio(directory: str, name: str, sample_rate: int) -> torch.Tensor:
         )
 
     # Get the original sample rate using torchaudio
-    info = torchaudio.info(file_path)
-    orig_sample_rate = info.sample_rate
+    info = sf.info(file_path)
+    orig_sample_rate = info.samplerate
     # FFmpeg command to normalize loudness using speechnorm
     ffmpeg_cmd = [
         "ffmpeg",
